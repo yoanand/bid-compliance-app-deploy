@@ -1,0 +1,9 @@
+streamlit
+boto3
+pdfplumber
+strands-agents>=0.1.0
+strands-agents-tools>=0.1.0
+PyPDF2
+Jinja2
+pymupdf  # Ensure compatibility with PyMuPDF
+streamlit_autorefresh
