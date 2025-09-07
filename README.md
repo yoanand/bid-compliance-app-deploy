@@ -109,3 +109,4 @@ For issues or questions:
 1. Check the demo mode first to verify basic functionality
 2. Ensure AWS credentials have proper permissions
 3. Verify all dependencies are installed correctly
+4. Let's connect - www.linkedin.com/in/abhishek-anand-it-is
