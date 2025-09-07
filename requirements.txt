@@ -7,3 +7,4 @@ PyPDF2
 Jinja2
 pymupdf  # Ensure compatibility with PyMuPDF
 streamlit_autorefresh
+reportlab

@@ -8,6 +8,12 @@ import json
 import fitz
 from streamlit_autorefresh import st_autorefresh
 import random
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from datetime import datetime
 
 # Set page config
 st.set_page_config(
@@ -69,6 +75,188 @@ def extract_and_save_code(text, output_filename="pdf_app.py"):
             f.write(code)
         return True
     return False
+
+def generate_pdf_report(results, filename="compliance_report.pdf"):
+    """Generate a PDF report from analysis results"""
+    try:
+        # Create a temporary file for the PDF
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+            pdf_path = tmp_file.name
+        
+        # Create PDF document
+        doc = SimpleDocTemplate(pdf_path, pagesize=A4)
+        story = []
+        
+        # Get styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            spaceAfter=30,
+            alignment=1,  # Center alignment
+            textColor=colors.darkblue
+        )
+        
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=14,
+            spaceAfter=12,
+            textColor=colors.darkblue
+        )
+        
+        # Title
+        story.append(Paragraph("Bid Compliance Analysis Report", title_style))
+        story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        # Supplier Information
+        if "Supplier Info" in results:
+            story.append(Paragraph("Supplier Information", heading_style))
+            supplier_info = results["Supplier Info"]
+            for key, value in supplier_info.items():
+                story.append(Paragraph(f"<b>{key}:</b> {value}", styles['Normal']))
+            story.append(Spacer(1, 15))
+        
+        # Compliance Check
+        if "Compliance Check" in results:
+            story.append(Paragraph("Compliance Status", heading_style))
+            compliance = results["Compliance Check"]
+            for criterion, status in compliance.items():
+                story.append(Paragraph(f"<b>{criterion}:</b> {status}", styles['Normal']))
+            story.append(Spacer(1, 15))
+        
+        # Scoring Results
+        if "Scoring" in results:
+            story.append(Paragraph("Bid Scoring Results", heading_style))
+            scoring = results["Scoring"]
+            
+            # Create scoring table
+            table_data = [["Criterion", "Score (1-5)", "Weight (%)", "Weighted Score"]]
+            for criterion, data in scoring.items():
+                if criterion != "Final Score":
+                    table_data.append([
+                        criterion,
+                        str(data["Score"]),
+                        str(data["Weight"]),
+                        str(data["Weighted Score"])
+                    ])
+            
+            # Add final score row
+            if "Final Score" in scoring:
+                table_data.append(["<b>FINAL SCORE</b>", "", "", f"<b>{scoring['Final Score']}/5.0</b>"])
+            
+            # Create table
+            table = Table(table_data)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -2), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, -1), (-1, -1), 12),
+            ]))
+            
+            story.append(table)
+            story.append(Spacer(1, 20))
+        
+        # Build PDF
+        doc.build(story)
+        
+        # Read the generated PDF
+        with open(pdf_path, 'rb') as f:
+            pdf_data = f.read()
+        
+        # Clean up temporary file
+        os.unlink(pdf_path)
+        
+        return pdf_data
+        
+    except Exception as e:
+        st.error(f"Error generating PDF: {str(e)}")
+        return None
+
+def generate_ai_analysis_pdf(results, filename="ai_analysis_report.pdf"):
+    """Generate a PDF report from AI analysis results"""
+    try:
+        # Create a temporary file for the PDF
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+            pdf_path = tmp_file.name
+        
+        # Create PDF document
+        doc = SimpleDocTemplate(pdf_path, pagesize=A4)
+        story = []
+        
+        # Get styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            spaceAfter=30,
+            alignment=1,  # Center alignment
+            textColor=colors.darkblue
+        )
+        
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=14,
+            spaceAfter=12,
+            textColor=colors.darkblue
+        )
+        
+        # Title
+        story.append(Paragraph("AI-Powered Bid Analysis Report", title_style))
+        story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        # Document Summary
+        if "summary" in results:
+            story.append(Paragraph("Document Summary", heading_style))
+            story.append(Paragraph(results["summary"], styles['Normal']))
+            story.append(Spacer(1, 15))
+        
+        # Compliance Analysis
+        if "compliance" in results:
+            story.append(Paragraph("Compliance Analysis", heading_style))
+            story.append(Paragraph(results["compliance"], styles['Normal']))
+            story.append(Spacer(1, 15))
+        
+        # Bid Scoring
+        if "scoring" in results:
+            story.append(Paragraph("Bid Scoring Analysis", heading_style))
+            story.append(Paragraph(results["scoring"], styles['Normal']))
+            story.append(Spacer(1, 15))
+        
+        # PDF Data Information
+        if "pdf_data" in results:
+            story.append(Paragraph("Document Information", heading_style))
+            for filename, data in results["pdf_data"].items():
+                story.append(Paragraph(f"<b>File:</b> {filename}", styles['Normal']))
+                story.append(Paragraph(f"<b>Path:</b> {data['path']}", styles['Normal']))
+            story.append(Spacer(1, 15))
+        
+        # Build PDF
+        doc.build(story)
+        
+        # Read the generated PDF
+        with open(pdf_path, 'rb') as f:
+            pdf_data = f.read()
+        
+        # Clean up temporary file
+        os.unlink(pdf_path)
+        
+        return pdf_data
+        
+    except Exception as e:
+        st.error(f"Error generating AI analysis PDF: {str(e)}")
+        return None
 
 def main():
     st.title("🏢 Bid Compliance Checking System")
@@ -248,13 +436,17 @@ def main():
                                 "pdf_data": pdf_data
                             }
                             
-                            results_json = json.dumps(results, indent=2)
-                            st.download_button(
-                                label="📥 Download Analysis Report (JSON)",
-                                data=results_json,
-                                file_name=f"analysis_report_{uploaded_file.name}.json",
-                                mime="application/json"
-                            )
+                            # Generate PDF report
+                            pdf_data = generate_ai_analysis_pdf(results)
+                            if pdf_data:
+                                st.download_button(
+                                    label="📥 Download Analysis Report (PDF)",
+                                    data=pdf_data,
+                                    file_name=f"analysis_report_{uploaded_file.name.replace('.pdf', '')}.pdf",
+                                    mime="application/pdf"
+                                )
+                            else:
+                                st.error("Failed to generate PDF report")
                             
                         else:
                             st.error("❌ Failed to create AI agents. Please check your credentials.")
@@ -335,13 +527,16 @@ def display_results(results, title):
     
     # Download results
     st.subheader("💾 Download Results")
-    results_json = json.dumps(results, indent=2)
-    st.download_button(
-        label="📥 Download Compliance Report (JSON)",
-        data=results_json,
-        file_name="compliance_report.json",
-        mime="application/json"
-    )
+    pdf_data = generate_pdf_report(results)
+    if pdf_data:
+        st.download_button(
+            label="📥 Download Compliance Report (PDF)",
+            data=pdf_data,
+            file_name="compliance_report.pdf",
+            mime="application/pdf"
+        )
+    else:
+        st.error("Failed to generate PDF report")
 
 if __name__ == "__main__":
     main()
