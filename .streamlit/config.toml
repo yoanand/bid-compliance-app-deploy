@@ -13,3 +13,7 @@ backgroundColor = "#ffffff"
 secondaryBackgroundColor = "#f0f2f6"
 textColor = "#262730"
 font = "sans serif"
+
+# Deployment configuration
+[deployment]
+main_file = "main_app_with_cred.py"
